@@ -52,6 +52,8 @@ def _friendly_llm_error(e: Exception) -> str:
     msg = str(e)
     if "429" in msg or "RESOURCE_EXHAUSTED" in msg:
         return "무료 티어 사용량 한도에 도달했습니다. 1분 정도 기다렸다가 다시 시도해 주세요. (분당/일일 무료 한도)"
+    if "503" in msg or "UNAVAILABLE" in msg:
+        return "Gemini 서버가 혼잡합니다. 예비 모델까지 모두 혼잡한 상태이니 몇 분 뒤 다시 시도해 주세요."
     return msg
 
 ss = st.session_state

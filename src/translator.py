@@ -3,17 +3,12 @@
 from __future__ import annotations
 
 import json
-import os
 from dataclasses import dataclass
 
 from google import genai
 from google.genai import types
 
-DEFAULT_MODEL = "gemini-flash-latest"
-
-
-def _model() -> str:
-    return os.environ.get("GEMINI_MODEL", DEFAULT_MODEL)
+from .gemini_util import call_with_fallback
 
 
 _SYSTEM = """\
@@ -52,14 +47,16 @@ class TranslationResult:
 
 def translate_query(korean_query: str, client: genai.Client | None = None) -> TranslationResult:
     client = client or genai.Client()  # GEMINI_API_KEY 환경변수 사용
-    response = client.models.generate_content(
-        model=_model(),
-        contents=korean_query,
-        config=types.GenerateContentConfig(
-            system_instruction=_SYSTEM,
-            response_mime_type="application/json",
-            response_schema=_SCHEMA,
-        ),
+    _, response = call_with_fallback(
+        lambda model: client.models.generate_content(
+            model=model,
+            contents=korean_query,
+            config=types.GenerateContentConfig(
+                system_instruction=_SYSTEM,
+                response_mime_type="application/json",
+                response_schema=_SCHEMA,
+            ),
+        )
     )
     data = json.loads(response.text)
     keywords = [k.strip() for k in data["keywords"] if k.strip()][:3]
