@@ -1,6 +1,15 @@
 # 앱 외형 설정. 색·모서리·테두리만 조정하고 폰트는 시스템 기본을 쓴다
 # (한글·일본어가 섞여 나오므로 웹폰트를 강제하면 글자마다 폰트가 튀기 쉽다).
 
+[client]
+# 우측 상단 메뉴에서 개발자용 항목(rerun, clear cache, deploy 등)을 숨긴다.
+# 테마 전환·인쇄 같은 이용자용 항목은 남는다.
+toolbarMode = "viewer"
+
+# 예상 못 한 예외가 났을 때 브라우저에는 일반 메시지만 보이고,
+# 실제 내용과 스택트레이스는 서버 로그에만 남긴다.
+showErrorDetails = "none"
+
 [theme]
 base = "light"
 baseRadius = "0.4rem"
