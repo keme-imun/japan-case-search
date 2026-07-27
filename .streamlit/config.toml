@@ -1,0 +1,39 @@
+# 앱 외형 설정. 색·모서리·테두리만 조정하고 폰트는 시스템 기본을 쓴다
+# (한글·일본어가 섞여 나오므로 웹폰트를 강제하면 글자마다 폰트가 튀기 쉽다).
+
+[theme]
+base = "light"
+baseRadius = "0.4rem"
+buttonRadius = "0.4rem"
+showWidgetBorder = true
+showSidebarBorder = true
+
+# 라이트: 종이 느낌의 따뜻한 흰색 + 진한 남색 (법원·법전 인쇄물 톤)
+[theme.light]
+primaryColor = "#1B3A6B"
+backgroundColor = "#FBFAF7"
+secondaryBackgroundColor = "#F1EEE7"
+textColor = "#1C1B19"
+linkColor = "#1B3A6B"
+borderColor = "#DED9CD"
+codeBackgroundColor = "#F1EEE7"
+
+[theme.light.sidebar]
+backgroundColor = "#F1EEE7"
+secondaryBackgroundColor = "#FBFAF7"
+borderColor = "#DED9CD"
+
+# 다크: 같은 남색 계열을 밝게 뒤집어 대비를 확보
+[theme.dark]
+primaryColor = "#8FB0E8"
+backgroundColor = "#12151C"
+secondaryBackgroundColor = "#1B1F29"
+textColor = "#E8E6E1"
+linkColor = "#9BBBF0"
+borderColor = "#2C3340"
+codeBackgroundColor = "#1B1F29"
+
+[theme.dark.sidebar]
+backgroundColor = "#171B23"
+secondaryBackgroundColor = "#12151C"
+borderColor = "#2C3340"
