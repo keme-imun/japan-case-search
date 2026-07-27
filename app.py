@@ -17,21 +17,29 @@ load_dotenv()
 
 # Streamlit Cloud에서는 st.secrets로 키가 주입된다 → 환경변수로 복사
 for _k in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GEMINI_MODEL", "APP_PASSWORD",
-           "REQUIRE_USER_API_KEY"):
+           "ALLOW_SERVER_API_KEY"):
     try:
         if _k not in os.environ and _k in st.secrets:
             os.environ[_k] = st.secrets[_k]
     except Exception:
         pass  # 로컬에 secrets.toml이 없으면 st.secrets 접근이 실패할 수 있음
 
+DEVELOPER = "경희대학교 법학전문대학원 17기 전상훈 개발"
+
 _ICON = Path(__file__).parent / "assets" / "icon.png"
 st.set_page_config(
     page_title="일본 판례 검색",
     page_icon=str(_ICON) if _ICON.exists() else "⚖️",
     layout="wide",
+    menu_items={
+        "About": f"**일본 판례 검색 · 한국어 요약**\n\n{DEVELOPER}\n\n"
+                 "일본 재판소 裁判例検索(courts.go.jp)의 판례를 검색해 원문 PDF를 "
+                 "내려받고 한국어로 요약합니다. 요약은 참고용이며 법률 자문이 아닙니다."
+    },
 )
 st.title("⚖️ 일본 판례 검색 · 한국어 요약")
 st.caption("일본 재판소 裁判例検索(courts.go.jp)에서 판례를 찾아 원문 PDF를 내려받고 한국어로 요약합니다.")
+st.caption(f"🏫 {DEVELOPER}")
 
 _GUIDE = """\
 ##### 1. 사이드바에 API 키 입력
@@ -83,20 +91,22 @@ if _app_password:
                 st.error("비밀번호가 올바르지 않습니다.")
         st.stop()
 
-# ── API 키: 접속자가 각자 자기 키를 입력한다 ────────────────────────────────
-# REQUIRE_USER_API_KEY=1 이면 서버에 설정된 키를 쓰지 않고 반드시 개인 키를 받는다.
-# (여러 사람에게 URL을 공유할 때 사용 — 내 무료 한도가 소모되는 것을 막는다)
-_require_user_key = os.environ.get("REQUIRE_USER_API_KEY", "").strip().lower() in (
+# ── API 키: 기본은 "접속자가 각자 자기 키를 입력" ──────────────────────────
+# 서버에 설정된 키를 쓰려면 ALLOW_SERVER_API_KEY=1 을 명시해야 한다. 기본을 이렇게
+# 잡은 이유는, 배포 설정에 키를 남겨 둔 채 플래그를 깜빡하면 접속자 전원이 배포자의
+# 무료 한도를 소모하기 때문이다. 안전한 쪽이 기본이어야 한다.
+# (혼자 쓰는 로컬에서는 .env 에 ALLOW_SERVER_API_KEY=1 을 넣어 두면 편하다)
+_allow_server_key = os.environ.get("ALLOW_SERVER_API_KEY", "").strip().lower() in (
     "1", "true", "yes"
 )
-if _require_user_key:
+if _allow_server_key:
+    _server_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+else:
     # 환경변수에 남겨 두면 api_key를 넘기지 않는 코드 경로가 생겼을 때 배포자의 키가
     # 조용히 쓰인다. 아예 지워서 폴백 자체를 없앤다.
     for _k in ("GEMINI_API_KEY", "GOOGLE_API_KEY"):
         os.environ.pop(_k, None)
     _server_key = None
-else:
-    _server_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
 
 with st.sidebar:
     st.header("🔑 Gemini API 키")
@@ -104,7 +114,7 @@ with st.sidebar:
         "본인의 API 키",
         type="password",
         key="user_api_key",
-        placeholder="AIza...",
+        placeholder="AIza... 또는 AQ.A...",
         help="입력한 키는 이 브라우저 세션에만 보관되며 서버에 저장되지 않습니다.",
     ).strip()
 
@@ -115,10 +125,13 @@ with st.sidebar:
 
     st.markdown(
         "1. [Google AI Studio](https://aistudio.google.com/apikey) 접속 (Google 계정만 있으면 됨)\n"
-        "2. **Create API key** → 생성된 `AIza...` 키 복사\n"
+        "2. **Create API key** → 생성된 키 복사 (`AIza...` 또는 `AQ.A...` 로 시작)\n"
         "3. 위 칸에 붙여넣기\n\n"
         "카드 등록 없이 **무료**이고, 무료 한도는 각자의 계정에 따로 적용됩니다."
     )
+
+    st.divider()
+    st.caption(DEVELOPER)
 
 api_key = _entered or _server_key
 
@@ -246,3 +259,10 @@ if result is not None:
                                 )
                         except Exception as e:
                             st.error(f"요약 실패: {_friendly_llm_error(e)}")
+
+# ── 푸터 ──────────────────────────────────────────────────────────────────
+st.divider()
+st.caption(
+    f"{DEVELOPER} · 판례 출처 [일본 재판소 裁判例検索](https://www.courts.go.jp/hanrei/search1/index.html)"
+    " · 요약은 참고용이며 법률 자문이 아닙니다."
+)
