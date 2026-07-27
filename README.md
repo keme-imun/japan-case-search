@@ -120,6 +120,15 @@ Secrets에 `GEMINI_API_KEY`를 **넣지 않으면 됩니다.** 서버 키는 `AL
 아이콘이 Streamlit 기본 로고로 뜨면 바로가기 우클릭 → **속성** → **웹 문서** →
 **아이콘 변경** 에서 `assets/icon.ico` 를 지정하세요.
 
+**메뉴에 해당 항목이 없다면** — 브라우저 버전에 따라 메뉴 구성이 달라집니다.
+아래 스크립트가 같은 결과(주소창 없는 앱 창 + 아이콘)를 메뉴 없이 만들어 줍니다.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\create_shortcut.ps1 -Url "https://내앱.streamlit.app"
+```
+
+Chrome 대신 Edge로 열려면 `-Browser edge` 를 덧붙입니다.
+
 ### 방법 B — 내 컴퓨터에서 직접 실행
 
 인터넷 배포 없이 로컬에서 돌리는 방식입니다. 저장소를 내려받은 뒤:
