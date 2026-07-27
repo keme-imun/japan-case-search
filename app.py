@@ -130,9 +130,6 @@ with st.sidebar:
         "카드 등록 없이 **무료**이고, 무료 한도는 각자의 계정에 따로 적용됩니다."
     )
 
-    st.divider()
-    st.caption(DEVELOPER)
-
 api_key = _entered or _server_key
 
 if not api_key:
