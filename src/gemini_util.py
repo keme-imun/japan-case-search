@@ -32,7 +32,11 @@ def make_client(api_key: str | None = None) -> genai.Client:
     여러 사람이 각자 자기 키로 접속하는 배포에서는 반드시 api_key를 넘겨야 한다
     (환경변수는 프로세스 전역이라 사용자별로 분리되지 않는다).
     """
-    return genai.Client(api_key=api_key) if api_key else genai.Client()
+    if api_key:
+        return genai.Client(api_key=api_key)
+    if not (os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")):
+        raise RuntimeError("API 키가 없습니다. 사이드바에서 본인의 Gemini 키를 입력해 주세요.")
+    return genai.Client()
 
 
 def _is_retryable(e: Exception) -> bool:

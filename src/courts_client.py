@@ -13,15 +13,18 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from urllib.parse import urlparse
 
 import requests
 from bs4 import BeautifulSoup
 
 BASE = "https://www.courts.go.jp"
+ALLOWED_HOST = "www.courts.go.jp"
 SEARCH_URL = f"{BASE}/hanrei/search1/index.html"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) JapanCaseSearch/0.1 (personal research tool)",
@@ -32,13 +35,27 @@ REQUEST_DELAY_SEC = 1.0  # 사이트 부하 방지
 _last_request_at = 0.0
 
 
+def _check_url(url: str) -> None:
+    """courts.go.jp의 https 주소인지 확인한다.
+
+    링크는 원격 HTML에서 뽑아 오므로, 사이트가 변조되거나 중간에서 조작되면
+    임의의 주소를 가리킬 수 있다. 그대로 요청하면 서버가 내부망 주소를 대신
+    긁어 주는 통로가 되므로(SSRF), 목적지를 재판소 사이트로 못박는다.
+    """
+    p = urlparse(url)
+    if p.scheme != "https" or p.hostname != ALLOWED_HOST:
+        raise ValueError(f"허용되지 않은 주소로의 요청을 차단했습니다: {url}")
+
+
 def _polite_get(url: str, **kwargs) -> requests.Response:
     global _last_request_at
+    _check_url(url)
     wait = REQUEST_DELAY_SEC - (time.time() - _last_request_at)
     if wait > 0:
         time.sleep(wait)
     resp = requests.get(url, headers=HEADERS, timeout=30, **kwargs)
     _last_request_at = time.time()
+    _check_url(resp.url)  # 리다이렉트로 외부 호스트에 끌려가지 않았는지 확인
     resp.raise_for_status()
     return resp
 
@@ -147,7 +164,15 @@ def download_pdf(case: CaseResult, dest_dir: str | Path = "downloads") -> Path:
         raise ValueError(f"이 판례({case.case_number})는 전문 PDF가 공개되어 있지 않습니다")
     dest = Path(dest_dir)
     dest.mkdir(parents=True, exist_ok=True)
-    path = dest / f"hanrei-{case.case_id}.pdf"
+
+    # case_id는 원격 HTML에서 정규식으로 뽑으므로 파싱 실패 시 빈 문자열이 된다.
+    # 그대로 쓰면 서로 다른 판례가 모두 "hanrei-.pdf"가 되어, 아래 캐시 분기에서
+    # 남의 판결문을 이 사건의 것으로 반환하게 된다. 숫자 id일 때만 신뢰한다.
+    if re.fullmatch(r"\d+", case.case_id or ""):
+        stem = f"hanrei-{case.case_id}"
+    else:
+        stem = "hanrei-" + hashlib.sha256(case.pdf_url.encode()).hexdigest()[:16]
+    path = dest / f"{stem}.pdf"
     if path.exists() and path.stat().st_size > 0:
         return path
     resp = _polite_get(case.pdf_url)

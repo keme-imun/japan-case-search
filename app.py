@@ -4,6 +4,7 @@
 → 판례 선택 → PDF 다운로드 → 한국어 요약(Gemini, 무료 티어).
 """
 
+import hmac
 import os
 from pathlib import Path
 
@@ -75,7 +76,7 @@ if _app_password:
     if not st.session_state.get("authed"):
         pw = st.text_input("접속 비밀번호", type="password")
         if st.button("확인"):
-            if pw == _app_password:
+            if hmac.compare_digest(pw, _app_password):
                 st.session_state["authed"] = True
                 st.rerun()
             else:
@@ -88,9 +89,14 @@ if _app_password:
 _require_user_key = os.environ.get("REQUIRE_USER_API_KEY", "").strip().lower() in (
     "1", "true", "yes"
 )
-_server_key = None if _require_user_key else (
-    os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-)
+if _require_user_key:
+    # 환경변수에 남겨 두면 api_key를 넘기지 않는 코드 경로가 생겼을 때 배포자의 키가
+    # 조용히 쓰인다. 아예 지워서 폴백 자체를 없앤다.
+    for _k in ("GEMINI_API_KEY", "GOOGLE_API_KEY"):
+        os.environ.pop(_k, None)
+    _server_key = None
+else:
+    _server_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
 
 with st.sidebar:
     st.header("🔑 Gemini API 키")
