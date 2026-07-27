@@ -27,6 +27,7 @@ for _k in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GEMINI_MODEL", "APP_PASSWORD",
 DEVELOPER = "경희대학교 법학전문대학원 17기 전상훈 개발"
 
 _ICON = Path(__file__).parent / "assets" / "icon.png"
+_ICON_ICO = Path(__file__).parent / "assets" / "icon.ico"
 st.set_page_config(
     page_title="일본 판례 검색",
     page_icon=str(_ICON) if _ICON.exists() else "⚖️",
@@ -77,6 +78,44 @@ _GUIDE = """\
 
 with st.expander("📖 사용법 (처음이신가요?)", expanded=not st.session_state.get("used_once")):
     st.markdown(_GUIDE)
+
+# ── 바탕화면 설치 안내 ─────────────────────────────────────────────────────
+# 브라우저의 설치 프롬프트는 web app manifest가 있어야 뜨는데 Streamlit은 이를
+# 제공하지 않는다. 게다가 커스텀 컴포넌트는 iframe 안이라 최상위 페이지의 설치
+# 이벤트에 접근할 수 없다. 그래서 버튼 대신 브라우저별 경로를 안내한다.
+with st.expander("💻 바탕화면·홈 화면에 설치하기"):
+    _t_win, _t_mac, _t_mobile = st.tabs(["Windows", "Mac", "휴대폰"])
+
+    with _t_win:
+        st.markdown(
+            "**Chrome / Edge**\n\n"
+            "1. 주소창 오른쪽 끝의 설치 아이콘(⊕ 또는 모니터 모양)을 클릭\n"
+            "2. 아이콘이 없으면 우측 상단 `⋮` → **캐스트, 저장 및 공유** → **페이지를 앱으로 설치**\n"
+            "3. **설치** 를 누르면 바탕화면에 아이콘이 생기고 주소창 없는 창으로 열립니다\n\n"
+            "아이콘이 Streamlit 기본 로고로 뜨면, 바로가기 우클릭 → **속성** → "
+            "**웹 문서** → **아이콘 변경** 에서 아래 `.ico` 파일을 지정하세요."
+        )
+    with _t_mac:
+        st.markdown(
+            "**Chrome / Edge** — 주소창 오른쪽 설치 아이콘, 또는 `⋮` → "
+            "**캐스트, 저장 및 공유** → **페이지를 앱으로 설치**\n\n"
+            "**Safari** — 메뉴 막대의 **파일** → **Dock에 추가**"
+        )
+    with _t_mobile:
+        st.markdown(
+            "**아이폰 (Safari)** — 하단 공유 버튼 `⬆️` → **홈 화면에 추가**\n\n"
+            "**안드로이드 (Chrome)** — 우측 상단 `⋮` → **홈 화면에 추가**\n\n"
+            "홈 화면 아이콘을 누르면 앱처럼 전체 화면으로 열립니다."
+        )
+
+    if _ICON_ICO.exists():
+        st.download_button(
+            "⬇️ 아이콘 파일 내려받기 (.ico)",
+            data=_ICON_ICO.read_bytes(),
+            file_name="japan-case-search.ico",
+            mime="image/vnd.microsoft.icon",
+            help="Windows 바로가기의 아이콘을 바꿀 때 사용합니다.",
+        )
 
 # ── 비밀번호 잠금 (선택): APP_PASSWORD가 설정된 경우에만 인증 요구 ──────────
 _app_password = os.environ.get("APP_PASSWORD")
