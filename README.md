@@ -36,6 +36,8 @@ copy .env.example .env   # 열어서 GEMINI_API_KEY 입력
 - `src/courts_client.py` — courts.go.jp 검색·파싱·PDF 다운로드
 - `src/summarizer.py` — PDF 한국어 요약 (Gemini, 스트리밍 + 캐시)
 - `src/pdf_text.py` — PDF 로컬 텍스트 추출 및 입력 방식(PDF/텍스트) 토큰 비교
+- `.streamlit/config.toml` — 앱 테마(색·모서리), 라이트/다크 각각 지정
+- `tools/make_icon.py` — `assets/` 의 아이콘 생성 스크립트
 
 모델은 `.env`의 `GEMINI_MODEL`로 바꿀 수 있습니다.
 
@@ -96,6 +98,22 @@ Secrets에 `GEMINI_API_KEY`를 **넣지 말고**, 대신 `REQUIRE_USER_API_KEY =
 바로 볼 수 있습니다.
 
 > 키를 카카오톡 등으로 주고받지 않도록 안내해 주세요. 각자 발급이 원칙입니다.
+
+## 아이콘
+
+`assets/icon.png` 가 브라우저 탭 아이콘(파비콘)으로 쓰입니다.
+
+**바탕화면 바로가기 아이콘을 바꾸려면** — Streamlit은 초기 HTML에 자기 파비콘을
+넣고 앱이 뜬 뒤에야 교체하므로, 바로가기를 만드는 시점에 따라 Streamlit 로고가
+그대로 남을 수 있습니다. 확실한 방법은 Windows에서 직접 지정하는 것입니다.
+
+바로가기 우클릭 → **속성** → **웹 문서** 탭 → **아이콘 변경** → `assets/icon.ico` 선택
+
+아이콘 색을 바꾸려면 `tools/make_icon.py` 의 `NAVY`·`PAPER` 값을 고치고 다시 실행합니다.
+
+```powershell
+.venv\Scripts\python tools/make_icon.py
+```
 
 ## 무료 티어 주의사항
 

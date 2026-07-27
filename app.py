@@ -23,7 +23,12 @@ for _k in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GEMINI_MODEL", "APP_PASSWORD",
     except Exception:
         pass  # 로컬에 secrets.toml이 없으면 st.secrets 접근이 실패할 수 있음
 
-st.set_page_config(page_title="일본 판례 검색", page_icon="⚖️", layout="wide")
+_ICON = Path(__file__).parent / "assets" / "icon.png"
+st.set_page_config(
+    page_title="일본 판례 검색",
+    page_icon=str(_ICON) if _ICON.exists() else "⚖️",
+    layout="wide",
+)
 st.title("⚖️ 일본 판례 검색 · 한국어 요약")
 st.caption("일본 재판소 裁判例検索(courts.go.jp)에서 판례를 찾아 원문 PDF를 내려받고 한국어로 요약합니다.")
 
