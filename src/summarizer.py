@@ -10,14 +10,15 @@ from pathlib import Path
 from google import genai
 from google.genai import types
 
-from .gemini_util import call_with_fallback
+from . import pdf_text
+from .gemini_util import call_with_fallback, make_client
 
 CACHE_DIR = Path("cache")
 
 
 _SYSTEM = """\
 당신은 일본 판례를 한국 법률가에게 설명하는 한일 비교법 전문가입니다.
-첨부된 일본 판결문 PDF를 읽고 아래 구조의 한국어 요약을 작성하세요.
+주어진 일본 판결문을 읽고 아래 구조의 한국어 요약을 작성하세요.
 법률 용어는 한국어 번역 뒤에 일본어 원어를 괄호로 병기하세요. 예: 해고권 남용(解雇権濫用)
 
 ## 사건 개요
@@ -52,14 +53,30 @@ def summarize_pdf(
     pdf_path: Path,
     case_label: str = "",
     client: genai.Client | None = None,
+    api_key: str | None = None,
 ) -> Iterator[str]:
-    """PDF를 요약하며 텍스트 조각을 스트리밍으로 yield. 완료 시 캐시에 저장."""
-    client = client or genai.Client()  # GEMINI_API_KEY 환경변수 사용
+    """PDF를 요약하며 텍스트 조각을 스트리밍으로 yield. 완료 시 캐시에 저장.
 
-    contents = [
-        types.Part.from_bytes(data=pdf_path.read_bytes(), mime_type="application/pdf"),
-        f"다음 일본 판례를 요약해 주세요. {case_label}".strip(),
-    ]
+    입력 방식은 토큰이 적게 드는 쪽으로 자동 선택한다. Gemini는 PDF를 페이지당
+    258토큰 정액으로 계산하므로 글자가 빽빽한 판결문은 PDF가 싸고, 성긴 문서는
+    로컬 추출 텍스트가 싸다. 스캔 이미지 PDF는 추출이 안 되므로 항상 PDF를 쓴다.
+    """
+    client = client or make_client(api_key)
+
+    extracted = pdf_text.extract(pdf_path)
+    if extracted.cheaper_than_pdf:
+        mode = "text"
+        contents = [
+            f"다음 일본 판례를 요약해 주세요. {case_label}".strip(),
+            "\n\n--- 판결문 원문 ---\n" + extracted.text,
+        ]
+    else:
+        # 글자가 빽빽하거나(정액제가 유리) 스캔본이라 추출 실패 → PDF 원본 업로드
+        mode = "pdf"
+        contents = [
+            types.Part.from_bytes(data=pdf_path.read_bytes(), mime_type="application/pdf"),
+            f"다음 일본 판례를 요약해 주세요. {case_label}".strip(),
+        ]
 
     def _start(model: str):
         # 스트림을 열고 첫 청크까지 받아본다 — 503은 대부분 이 시점에 발생하므로
@@ -92,9 +109,9 @@ def summarize_pdf(
     summary = "".join(chunks)
     if summary.strip():
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        out = CACHE_DIR / f"summary-{pdf_path.stem}-{used_model}-{_digest(pdf_path)}.json"
+        out = CACHE_DIR / f"summary-{pdf_path.stem}-{used_model}-{mode}-{_digest(pdf_path)}.json"
         out.write_text(
-            json.dumps({"case": case_label, "model": used_model, "summary": summary},
+            json.dumps({"case": case_label, "model": used_model, "mode": mode, "summary": summary},
                        ensure_ascii=False, indent=2),
             encoding="utf-8",
         )

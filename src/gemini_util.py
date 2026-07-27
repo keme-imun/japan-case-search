@@ -11,6 +11,8 @@ import time
 from collections.abc import Callable
 from typing import TypeVar
 
+from google import genai
+
 T = TypeVar("T")
 
 _FALLBACKS = ["gemini-3.1-flash-lite", "gemini-2.0-flash"]
@@ -21,6 +23,16 @@ def model_chain() -> list[str]:
     primary = os.environ.get("GEMINI_MODEL", "gemini-flash-latest")
     chain = [primary] + [m for m in _FALLBACKS if m != primary]
     return chain
+
+
+def make_client(api_key: str | None = None) -> genai.Client:
+    """Gemini 클라이언트 생성.
+
+    api_key를 주면 그 키를 쓰고, 없으면 환경변수(GEMINI_API_KEY)를 쓴다.
+    여러 사람이 각자 자기 키로 접속하는 배포에서는 반드시 api_key를 넘겨야 한다
+    (환경변수는 프로세스 전역이라 사용자별로 분리되지 않는다).
+    """
+    return genai.Client(api_key=api_key) if api_key else genai.Client()
 
 
 def _is_retryable(e: Exception) -> bool:

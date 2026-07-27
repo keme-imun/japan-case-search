@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from google import genai
 from google.genai import types
 
-from .gemini_util import call_with_fallback
+from .gemini_util import call_with_fallback, make_client
 
 
 _SYSTEM = """\
@@ -45,8 +45,12 @@ class TranslationResult:
     explanation: str
 
 
-def translate_query(korean_query: str, client: genai.Client | None = None) -> TranslationResult:
-    client = client or genai.Client()  # GEMINI_API_KEY 환경변수 사용
+def translate_query(
+    korean_query: str,
+    client: genai.Client | None = None,
+    api_key: str | None = None,
+) -> TranslationResult:
+    client = client or make_client(api_key)
     _, response = call_with_fallback(
         lambda model: client.models.generate_content(
             model=model,
