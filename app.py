@@ -11,13 +11,13 @@ from pathlib import Path
 import streamlit as st
 from dotenv import load_dotenv
 
-from src import courts_client, summarizer, translator
+from src import app_url, courts_client, summarizer, translator
 
 load_dotenv()
 
 # Streamlit Cloud에서는 st.secrets로 키가 주입된다 → 환경변수로 복사
 for _k in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GEMINI_MODEL", "APP_PASSWORD",
-           "ALLOW_SERVER_API_KEY"):
+           "ALLOW_SERVER_API_KEY", "APP_URL"):
     try:
         if _k not in os.environ and _k in st.secrets:
             os.environ[_k] = st.secrets[_k]
@@ -41,6 +41,12 @@ st.set_page_config(
 st.title("⚖️ 일본 판례 검색 · 한국어 요약")
 st.caption("일본 재판소 裁判例検索(courts.go.jp)에서 판례를 찾아 원문 PDF를 내려받고 한국어로 요약합니다.")
 st.caption(f"🏫 {DEVELOPER}")
+
+try:
+    _raw_url = st.context.url
+except Exception:
+    _raw_url = None
+SHARE_URL = app_url.normalize(_raw_url, os.environ.get("APP_URL"))
 
 _GUIDE = """\
 ##### 1. 사이드바에 API 키 입력
@@ -75,6 +81,17 @@ _GUIDE = """\
 - 한도 초과(429) 안내가 뜨면 1분쯤 뒤에 다시 시도하세요.
 - 요약은 참고용이며 법률 자문이 아닙니다. 인용 전 반드시 원문을 확인하세요.
 """
+
+# ── 공유 주소 ──────────────────────────────────────────────────────────────
+if SHARE_URL:
+    with st.container(border=True):
+        _c1, _c2 = st.columns([3, 2], vertical_alignment="center")
+        _c1.markdown("**🔗 이 앱 공유하기**")
+        _c1.caption(
+            "아래 주소를 보내면 누구나 쓸 수 있습니다. 받는 사람은 각자 자기 "
+            "API 키를 넣으므로 내 사용량이 줄지 않습니다."
+        )
+        _c2.code(SHARE_URL, language=None)
 
 with st.expander("📖 사용법 (처음이신가요?)", expanded=not st.session_state.get("used_once")):
     st.markdown(_GUIDE)
@@ -179,6 +196,12 @@ with st.sidebar:
         "3. 위 칸에 붙여넣기\n\n"
         "카드 등록 없이 **무료**이고, 무료 한도는 각자의 계정에 따로 적용됩니다."
     )
+
+    if SHARE_URL:
+        st.divider()
+        st.markdown("**🔗 앱 주소**")
+        st.code(SHARE_URL, language=None)
+        st.caption("복사해서 공유하세요.")
 
 api_key = _entered or _server_key
 

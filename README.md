@@ -36,6 +36,7 @@ copy .env.example .env   # 열어서 GEMINI_API_KEY 입력
 - `src/courts_client.py` — courts.go.jp 검색·파싱·PDF 다운로드
 - `src/summarizer.py` — PDF 한국어 요약 (Gemini, 스트리밍 + 캐시)
 - `src/pdf_text.py` — PDF 로컬 텍스트 추출 및 입력 방식(PDF/텍스트) 토큰 비교
+- `src/app_url.py` — 공유용 주소 판별 (로컬 주소는 표시하지 않음)
 - `.streamlit/config.toml` — 앱 테마(색·모서리), 라이트/다크 각각 지정
 - `tools/make_icon.py` — `assets/` 의 아이콘 생성 스크립트
 - `run_app.bat` — Windows 실행 런처 (최초 실행 시 패키지 자동 설치)
