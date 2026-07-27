@@ -18,8 +18,10 @@
     }
   },
   "updateContentCommand": "[ -f packages.txt ] && sudo apt update && sudo apt upgrade -y && sudo xargs apt install -y <packages.txt; [ -f requirements.txt ] && pip3 install --user -r requirements.txt; pip3 install --user streamlit; echo '✅ Packages installed and Requirements met'",
+  // 템플릿 기본값에 있던 --server.enableCORS false --server.enableXsrfProtection false 를
+  // 뺐다. Codespaces 프리뷰 URL을 남과 공유할 때 XSRF 보호가 꺼진 채 노출되기 때문.
   "postAttachCommand": {
-    "server": "streamlit run app.py --server.enableCORS false --server.enableXsrfProtection false"
+    "server": "streamlit run app.py"
   },
   "portsAttributes": {
     "8501": {
